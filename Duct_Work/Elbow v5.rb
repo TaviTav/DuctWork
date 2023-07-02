@@ -5,6 +5,7 @@ module Elbow
     # Bugs: R=0
     # To do: TEST !!!!
     # To Do: improve a little, you have example in Step v2.rb it doesn't matter if a = a1 or a <> a1
+    # To Do: Remove A > A1 condition !!!, check dimensions, sort them, at the end rotate the elbow.
 
     # Get a reference to the current active model
     model = Sketchup.active_model
