@@ -1,9 +1,11 @@
 module Step
   def self.run
     # Rectangular step
-    # Version 2
+    # Version Beta 3 
     # Bugs:
     # To do: TEST IT MORE !!!!
+    # To do: Erase stray edges, CleanUp picks up too many edges, i think it's my fault :)
+    # To do: Revise / Rethink the name of the component, should be easy for values handling in csv/excel
 
     # Get a reference to the current active model
     model = Sketchup.active_model
@@ -20,6 +22,9 @@ module Step
     start_a         = 0.0
     step_angle      = 30.degrees
     step_area       = 0.0
+    min_size        = 100.mm  # Global constant?
+    min_g           = 25.mm   # Global constant?
+    step_inverted   = false
     area_square_inches  = 0.0
     conversion_factor   = 0.00064516
     filter_message      = false
@@ -47,21 +52,27 @@ module Step
       step_a, step_a1, step_b, step_f, step_g, step_g1, step_r = user_input[0..6].map { |value| value.inch }
       step_angle = user_input[7].degrees
 
+      # Check if the step starts with smaller side on origin and switch values between A and A1, G and G1
+      if step_a < step_a1
+        step_a, step_a1 = step_a1, step_a
+        step_g, step_g1 = step_g1, step_g
+        step_f = step_f - step_a + step_a1 # make sure F dimension stays on left side of the origin
+        step_inverted   = true
+      end
+
       # Check if variables are valid
       # A, A1, B > 100 mm
-      # A >= A1
-      # F > 50 mm
+      # F >= 50 mm
       # G, G1 >= 25 mm 
       # R >= 0 mm 
       # 0 < Angle <= 90°
-      if step_a < 100.mm && step_a1 < 100.mm && step_b < 100.mm && 
-        step_f < 50.mm && step_g > 25.mm && step_g1 < 50.mm && step_r < 0.mm && 
-        step_angle < 0 && step_angle > 90.degrees && step_a < step_a1
+      if step_a < min_size && step_a1 < min_size && step_b < min_size && 
+        step_f < 50.mm && step_g < min_g && step_g1 < min_g && step_r < 0.mm && 
+        step_angle < 0.degrees && step_angle > 90.degrees
         msg = 
-        'A, A1, B > 100 mm
-        A >= A1
+        'A, A1, B ' + min_size.to_s.gsub(/\s+/, "") + '
         F > 50 mm
-        G, G1 >= 25 mm 
+        G, G1 >= ' + min_g.to_s.gsub(/\s+/, "") + '
         R >= 0 mm 
         0 < Angle <= 90°'
         UI.messagebox(msg)
@@ -236,10 +247,32 @@ module Step
       face1.erase!
       face2.erase!
 
-      # Move the entire group to origin
+      # Make p13 the origin of the component
+      # Bigger side on X axis
       v6 = Geom::Vector3d.new(0, step_g, 0) # parallel on X axis
       translation = Geom::Transformation.translation(v6)
       group_entities.transform_entities(translation, group_entities.to_a)
+
+      # If the user wants A < A1 we make p05 the origin of the component
+      # This is useful for ramifications
+      # Smaller side on X axis
+      if step_inverted
+        # move p06 to origin, flip along red and rotate with 180
+        v6 = Geom::Vector3d.new(0, 0, 0) - p06.vector_to(p13)
+        tr = Geom::Transformation.translation(v6)
+        # group.transform!(translation.invert!)
+        group_entities.transform_entities(tr.invert!, group_entities.to_a)
+
+        #fl = Geom::Transformation.scaling([0,0,0], -1, 1, 1)
+        #group_entities.transform_entities(fl, group_entities.to_a)
+
+        ro = Geom::Transformation.rotation(ORIGIN, Z_AXIS, 180.degrees)
+        group_entities.transform_entities(ro, group_entities.to_a)
+
+        step_a, step_a1 = step_a1, step_a
+        step_g, step_g1 = step_g1, step_g
+        step_f = (step_f + step_a1 - step_a).inch # make sure F dimension is correct
+      end
 
       # Set the name of the group, example: 
       # -PDE <°_30 R_100 A_500 A1_400 B_300 F_250 G_25 G1_25 L_711 Area_1.2239

@@ -1,7 +1,7 @@
 module Elbow
   def self.run
     # Rectangular elbow
-    # Version beta v6
+    # Version Beta v6
     # Bugs:
     # To do: MORE TESTING !!!!
     # To do: Erase stray edges, CleanUp picks up too many edges, i think it's my fault :)
@@ -22,6 +22,7 @@ module Elbow
     elbow_area      = 0.0
     min_size        = 100.mm  # Global constant?
     min_g           = 25.mm   # Global constant?
+    elbow_inverted  = false
     # filter_message      = false
     elbow_inverted  = false
     conversion_factor   = 0.00064516  # Global constant?
@@ -198,20 +199,30 @@ module Elbow
       face1.erase!
       face2.erase!
 
-      # Move the entire group to origin
+      # Make p08 the origin of the component
+      # Bigger side on X axis
       v5 = Geom::Vector3d.new(0, elbow_g, 0) # parallel on X axis
-      translation = Geom::Transformation.translation(v5)
-      group_entities.transform_entities(translation, group_entities.to_a)
+      tr = Geom::Transformation.translation(v5)
+      group_entities.transform_entities(tr, group_entities.to_a)
 
-      # If elbow is inverted we put the smaller side on origin
+      # If the user wants A < A1 we make p02 the origin of the component
+      # This is useful for ramifications
+      # Smaller side on X axis
       if elbow_inverted
-        UI.messagebox ('You should put the smaller side on origin')
-        # translation = elbow_a - p02.x
-        # move p02 to origin
-        # flip along X axis
-        # move the group along X axis with translation
-        # rotate the group with 180 - elbow_angle around origin
-        # Switch A&G with A1&G1 values again
+        # move p02 to origin, flip along red and rotate with 180 + elbow_angle
+        v6 = Geom::Vector3d.new(0, 0, 0) - p02.vector_to(p08)
+        tr = Geom::Transformation.translation(v6)
+        # group.transform!(translation.invert!)
+        group_entities.transform_entities(tr.invert!, group_entities.to_a)
+
+        fl = Geom::Transformation.scaling([0,0,0], -1, 1, 1)
+        group_entities.transform_entities(fl, group_entities.to_a)
+
+        ro = Geom::Transformation.rotation(ORIGIN, Z_AXIS, 180.degrees + elbow_angle)
+        group_entities.transform_entities(ro, group_entities.to_a)
+
+        elbow_a, elbow_a1 = elbow_a1, elbow_a
+        elbow_g, elbow_g1 = elbow_g1, elbow_g
       end
 
       # Set the name of the group, example: -CR <°_90 R_100 A_300 A1_300 B_300 G_25 G1_25 Area_0.5279

@@ -1,7 +1,7 @@
 module Reduction
   def self.run
     # Rectangular reduction
-    # Version 3
+    # Version Beta 3
     # Bugs:
 
     # Get a reference to the current active model

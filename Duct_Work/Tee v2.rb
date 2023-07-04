@@ -1,7 +1,7 @@
 module Tee
   def self.run
     # Rectangular tee
-    # Version 2
+    # Version Beta 2
     # Bugs:
 
     # Get a reference to the current active model
