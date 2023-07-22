@@ -1,30 +1,38 @@
 module Tee
   def self.run
     # Rectangular tee
-    # Version Beta 2
+    # Version Beta 3
     # Bugs:
+    # To do:
+
+    # v3 changes:
+    # Removed mm from dialog box
 
     # Get a reference to the current active model
     model = Sketchup.active_model
 
     # Declare variables (initial values)
-    tee_a     = 300.mm
-    tee_b     = 300.mm
-    tee_c     = 300.mm
-    tee_g     = 25.mm
-    tee_g1    = 25.mm
-    tee_r     = 100.mm
-    tee_l     = 550.mm
+    tee_a     = 300
+    tee_b     = 300
+    tee_c     = 300
+    tee_g     = 25
+    tee_g1    = 25
+    tee_r     = 100
+    tee_l     = 550
     tee_area  = 0.0
     start_a   = 0.0
     end_a     = 90.degrees
     filter_message      = false
-    conversion_factor   = 0.00064516
     area_square_inches  = 0.0
+
+    # Constants
+    conversion_factor   = 0.00064516
+    min_size            = 100
+    min_g               = 25
 
     # Create a custom dialog box and retrieve user input
     def self.get_user_input(defaults)
-      prompts = ['A (mm):', 'B (mm):', 'C (mm):', 'G (mm):', 'G1 (mm):', 'R (mm):']
+      prompts = ['A [mm]:', 'B [mm]:', 'C [mm]:', 'G [mm]:', 'G1 [mm]:', 'R [mm]:']
       results = UI.inputbox(prompts, defaults, 'Enter Values for Tee')
       return results.map(&:to_f) if results
     end
@@ -42,21 +50,21 @@ module Tee
       end
 
       # Extract values from user input
-      tee_a, tee_b, tee_c, tee_g, tee_g1, tee_r = user_input[0..5].map { |value| value.inch }
+      tee_a, tee_b, tee_c, tee_g, tee_g1, tee_r = user_input[0..5].map { |value| value }
 
       # Check if variables are valid
       # a, b, c > 100 mm, 
       # g, g1 > 25 mm
       # r >= 0
-      if tee_a < 100.mm && tee_b < 100.mm && tee_c < 100.mm && 
-        tee_g < 25.mm && tee_g1 >= 25.mm && tee_r < 0
+      if tee_a < min_size && tee_b < min_size && tee_c < min_size && 
+        tee_g < min_g && tee_g1 < min_g && tee_r < 0
         msg = 
         'Invalid values detected!!! 
         
         Check the following conditions:
-        A, B, C > 100 mm, 
-        G, G1 >= 25 mm
-        R >= 0'
+        A, B, C > ' + min_size.to_s.gsub(/\s+/, "") + 
+        'G, G1 >= ' + min_g.to_s.gsub(/\s+/, "") + 
+        'R >= 0'
         UI.messagebox(msg)
         filter_message = true
         return
@@ -67,10 +75,18 @@ module Tee
 
       # Get the group entities
       group_entities = group.entities
-
-      # Find the length of the tee
-      tee_l = 2 * tee_r.inch + 2 * tee_g.inch + tee_a.inch
       
+      # Find the length of the tee
+      tee_l = 2 * tee_r + 2 * tee_g + tee_a
+      tee_l = tee_l.mm
+
+      tee_a     = tee_a.mm
+      tee_b     = tee_b.mm
+      tee_c     = tee_c.mm
+      tee_g     = tee_g.mm
+      tee_g1    = tee_g1.mm
+      tee_r     = tee_r.mm
+
       # Draw arc1, 2
       center_point_arc1 = Geom::Point3d.new(-tee_r, tee_g1, 0)
       center_point_arc2 = Geom::Point3d.new(-tee_r, tee_g1 + tee_a + 2 * tee_r, 0)
@@ -140,18 +156,18 @@ module Tee
       face2.erase!
       face3.erase!
 
-      # Set the name of the group, example: -TR R_100 A_300 B_300 C_300 G_25 G1_25 L_550 Area_0.5279
+      # Set the name of the group, example: -TR R_100 A_300 B_300 C_300 G_25 G1_25 L_550 Area_0.7029
       tee_r_str       = tee_r.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       tee_a_str       = tee_a.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       tee_b_str       = tee_b.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       tee_c_str       = tee_c.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       tee_g_str       = tee_g.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       tee_g1_str      = tee_g1.to_s.gsub(/\s+/, "").gsub(/mm/, "")
-      tee_l_str       = tee_l.inch.to_s.gsub(/\s+/, "").gsub(/mm/, "")
+      tee_l_str       = tee_l.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       tee_area_str    = tee_area.round(4).to_s
 
       tee_group_name  = "-TR R_"  + tee_r_str   +
-                          " A_"    + tee_a_str  +
+                          " A_"   + tee_a_str   +
                           " B_"   + tee_b_str   + 
                           " C_"   + tee_c_str   + 
                           " G_"   + tee_g_str   + 

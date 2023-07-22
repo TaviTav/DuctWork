@@ -3,34 +3,37 @@ module Elbow
     # Rectangular elbow
     # Version Beta v6
     # Bugs:
-    # To do: MORE TESTING !!!!
     # To do: Erase stray edges, CleanUp picks up too many edges, i think it's my fault :)
-    # To do: Revise / Rethink the name of the component, should be easy for values handling in csv/excel
+    # To do: MORE TESTING IS REQUIRED !!!!
+
+    # v7 changes:
+    # Removed mm from dialog box
 
     # Get a reference to the current active model
     model = Sketchup.active_model
 
     # Declare variables (initial values)
-    elbow_a         = 300.mm
-    elbow_a1        = 250.mm
-    elbow_b         = 300.mm
-    elbow_g         = 25.mm
-    elbow_g1        = 25.mm
-    elbow_r         = 100.mm
+    elbow_a         = 300
+    elbow_a1        = 250
+    elbow_b         = 300
+    elbow_g         = 25
+    elbow_g1        = 25
+    elbow_r         = 100
     start_a         = 0.0
     elbow_angle     = 90.degrees
     elbow_area      = 0.0
+    elbow_inverted  = false
+    area_square_inches  = 0.0
+    filter_message      = false
+
+    # Constants
+    conversion_factor   = 0.00064516  # Global constant?
     min_size        = 100.mm  # Global constant?
     min_g           = 25.mm   # Global constant?
-    elbow_inverted  = false
-    # filter_message      = false
-    elbow_inverted  = false
-    conversion_factor   = 0.00064516  # Global constant?
-    area_square_inches  = 0.0
 
     # Create a function for custom dialog box to retrieve user input
     def self.get_user_input(defaults)
-      prompts = ['A (mm):', 'A1 (mm):', 'B (mm):', 'G (mm):', 'G1 (mm):', 'R (mm):', 'Elbow Angle <° (degrees):']
+      prompts = ['A [mm]:', 'A1 [mm]:', 'B [mm]:', 'G [mm]:', 'G1 [mm]:', 'R [mm]:', 'Elbow Angle <° (degrees):']
       results = UI.inputbox(prompts, defaults, 'Enter Values for Elbow')
       return results.map(&:to_f) if results
     end
@@ -48,7 +51,7 @@ module Elbow
       end
 
       # Extract values from user input
-      elbow_a, elbow_a1, elbow_b, elbow_g, elbow_g1, elbow_r = user_input[0..5].map { |value| value.inch }
+      elbow_a, elbow_a1, elbow_b, elbow_g, elbow_g1, elbow_r = user_input[0..5].map { |value| value }
       elbow_angle = user_input[6].degrees
 
       # Check if the elbow starts with smaller side on origin and switch values between A and A1, G and G1
@@ -84,6 +87,13 @@ module Elbow
       # Create a new group & Get the group entities
       group = model.active_entities.add_group
       group_entities = group.entities
+
+      elbow_a   = elbow_a.mm
+      elbow_a1  = elbow_a1.mm
+      elbow_b   = elbow_b.mm
+      elbow_g   = elbow_g.mm
+      elbow_g1  = elbow_g1.mm
+      elbow_r   = elbow_r.mm
 
       # Draw geometry
       # Create relevant vectors 
@@ -225,7 +235,7 @@ module Elbow
         elbow_g, elbow_g1 = elbow_g1, elbow_g
       end
 
-      # Set the name of the group, example: -CR <°_90 R_100 A_300 A1_300 B_300 G_25 G1_25 Area_0.5279
+      # Set the name of the group, example: -CR <°_90 R_100 A_300 A1_250 B_300 G_25 G1_25 Area_0.4937
       elbow_r_str       = elbow_r.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       elbow_a_str       = elbow_a.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       elbow_a1_str      = elbow_a1.to_s.gsub(/\s+/, "").gsub(/mm/, "")

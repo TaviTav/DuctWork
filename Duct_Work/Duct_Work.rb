@@ -2,11 +2,11 @@
 # Version Beta 2
 
 require 'sketchup.rb'
-require_relative 'Elbow v6.rb'
-require_relative 'Reduction v3.rb'
-require_relative 'Tee v2.rb'
-require_relative 'Pants v2.rb'
-require_relative 'Step v3.rb'
+require_relative 'Elbow v7.rb'
+require_relative 'Reduction v4.rb'
+require_relative 'Tee v3.rb'
+require_relative 'Pants v3.rb'
+require_relative 'Step v4.rb'
 
 # Define the module and method for creating the menu items
 module Tav_Extensions
@@ -57,9 +57,7 @@ module Tav_Extensions
 
     # Work in progress
     def self.help
-      UI.messagebox('No documentation is provided yet. 
-        You are on your own! 
-        Please check the code at 
+      UI.messagebox('For documentation visit:
         https://github.com/TaviTav/DuctWork')
     end
     

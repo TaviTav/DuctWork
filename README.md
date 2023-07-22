@@ -4,34 +4,30 @@ This is a sketchup extension <br>
 Draw different types of special pieces of rectangular duct  <br> <br>
 
 Warning: This sketchup extension is WORK PROGRESS, not even Beta. <br>
-If you want to try it, download DuctWork.rbz and install it. <br>
-Usage: Documentation is not provided yet. It's not a priority for me atm. <br> <br>
+If you want to try it, download DuctWork.rbz and install it. <br> <br>
 
-Done so far:<br>
-Rectangular Elbow <br>
-Rectangular Reduction <br>
-Rectangular Tee <br>
-Rectangular Pants <br>
-Rectangular Step <br> <br>
+Usage:  In dialog box enter the required values for each type of piece:<br> <br>
 
-Still to come soon (hopefully): <br>
-Rectangular Chanel <br>
-Rectangular transition <br> <br>
+Elbow:<br>
+![Elbow](<img/Elbow cheatsheet.png>)<br> <br>
 
-Long term to do: <br>
-All these are variations and combinations of the above pieces <br>
-Not sure if i want these options: <br>
-Rectangular Ramification Elbow + Reduction or Chanel - Side by Side? <br>
-Rectangular Ramification Elbow + Reduction or Chanel - Stacked? <br>
-Rectangular Ramification Elbow + Step - Side by Side? <br>
-Rectangular Ramification Elbow + Step - Stacked? <br>
-Rectangular Ramification Elbow + Elbow - Side by Side? <br>
-Rectangular Ramification Elbow + Elbow - Stacked? <br> <br>
+Reduction:<br>
+Note: -E to the left of origin, +E to the right of origin <br>
+-F down relative to origin, +F up relative to origin <br>
+![Reduction](<img/Reduction cheatsheet.png>)<br><br>
 
-To Do: <br>
-Air Flow <br>
-Air Speed <br>
-Pressure loss <br>
+Tee:<br>
+![Tee](<img/Tee cheatsheet.png>)<br><br>
+
+Pants:<br>
+![Pants](<img/Pants cheatsheet.png>)<br><br>
+
+Step:<br>
+![Step](<img/Step cheatsheet.png>)<br><br>
+
+Duct:<br>
+![Duct](<img/Duct cheatsheet.png>)<br><br>
+
 
 License <a href="https://github.com/ErikMcClure/bad-licenses/blob/master/happy-bunny-license">Happy Bunny License</a> <br> <br> <br>
 <hr width="90%" /> <br> <br>

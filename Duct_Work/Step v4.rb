@@ -1,38 +1,42 @@
 module Step
   def self.run
     # Rectangular step
-    # Version Beta 3 
+    # Version Beta 4
     # Bugs:
-    # To do: TEST IT MORE !!!!
-    # To do: Erase stray edges, CleanUp picks up too many edges, i think it's my fault :)
-    # To do: Revise / Rethink the name of the component, should be easy for values handling in csv/excel
+    # To do: MORE TESTING IS REQUIRED !!!!
+
+    # v4 changes:
+    # Removed mm from dialog box
 
     # Get a reference to the current active model
     model = Sketchup.active_model
 
     # Declare variables (initial values)
-    step_a          = 500.mm
-    step_a1         = 400.mm
-    step_b          = 300.mm
-    step_f          = 250.mm
-    step_g          = 25.mm
-    step_g1         = 25.mm
-    step_l          = 0.mm
-    step_r          = 100.mm
+    step_a          = 500
+    step_a1         = 400
+    step_b          = 300
+    step_f          = 250
+    step_g          = 25
+    step_g1         = 25
+    step_l          = 0
+    step_r          = 100
     start_a         = 0.0
     step_angle      = 30.degrees
     step_area       = 0.0
-    min_size        = 100.mm  # Global constant?
-    min_g           = 25.mm   # Global constant?
     step_inverted   = false
     area_square_inches  = 0.0
-    conversion_factor   = 0.00064516
     filter_message      = false
+
+    # Constants
+    conversion_factor   = 0.00064516
+    min_size            = 100
+    min_g               = 25
+    min_f               = 50
 
     # Create a custom dialog box and retrieve user input
     def self.get_user_input(defaults)
-      prompts = ['A (mm):', 'A1 (mm)', 'B (mm):', 'F (mm):', 'G (mm):', 'G1 (mm):', 'R (mm):', '<° (degrees):']
-      results = UI.inputbox(prompts, defaults, 'Enter Values For PDE')
+      prompts = ['A [mm]:', 'A1 [mm]:', 'B [mm]:', 'F [mm]:', 'G [mm]:', 'G1 [mm]:', 'R [mm]:', '<° (degrees):']
+      results = UI.inputbox(prompts, defaults, 'Enter Values for Step')
       return results.map(&:to_f) if results
     end
 
@@ -49,7 +53,7 @@ module Step
       end
 
       # Extract values from user input
-      step_a, step_a1, step_b, step_f, step_g, step_g1, step_r = user_input[0..6].map { |value| value.inch }
+      step_a, step_a1, step_b, step_f, step_g, step_g1, step_r = user_input[0..6].map { |value| value }
       step_angle = user_input[7].degrees
 
       # Check if the step starts with smaller side on origin and switch values between A and A1, G and G1
@@ -67,24 +71,31 @@ module Step
       # R >= 0 mm 
       # 0 < Angle <= 90°
       if step_a < min_size && step_a1 < min_size && step_b < min_size && 
-        step_f < 50.mm && step_g < min_g && step_g1 < min_g && step_r < 0.mm && 
+        step_f < min_f && step_g < min_g && step_g1 < min_g && step_r < 0 && 
         step_angle < 0.degrees && step_angle > 90.degrees
         msg = 
-        'A, A1, B ' + min_size.to_s.gsub(/\s+/, "") + '
-        F > 50 mm
-        G, G1 >= ' + min_g.to_s.gsub(/\s+/, "") + '
-        R >= 0 mm 
+        'A, A1, B ' + min_size.to_s.gsub(/\s+/, "") +
+        'F > ' + min_f.to_s.gsub(/\s+/, "") +
+        'G, G1 >= ' + min_g.to_s.gsub(/\s+/, "") +
+        'R >= 0 mm 
         0 < Angle <= 90°'
         UI.messagebox(msg)
         filter_message = true
         return
       end
-      # Create a new group
-      group = model.active_entities.add_group
-
-      # Get the group entities
-      group_entities = group.entities
       
+      # Create a new group & Get the group entities
+      group = model.active_entities.add_group
+      group_entities = group.entities
+
+      step_a    = step_a.mm
+      step_a1   = step_a1.mm
+      step_b    = step_b.mm
+      step_f    = step_f.mm
+      step_g    = step_g.mm
+      step_g1   = step_g1.mm
+      step_r    = step_r.mm
+
       # Draw geometry
       # Create relevant vectors 
       v1 = Geom::Vector3d.new(  Math.cos(step_angle - 90.degrees), 
@@ -287,16 +298,16 @@ module Step
       step_l_str        = step_l.inch.to_s.gsub(/\s+/, "").gsub(/mm/, "").gsub(/~/, "")
       step_area_str     = step_area.round(4).to_s
 
-      step_group_name   = "-PDE <°_" + (step_angle * 180 / Math::PI).round.to_s + 
-                          " R_"   + step_r_str  + 
-                          " A_"   + step_a_str  + 
-                          " A1_"  + step_a1_str +
-                          " B_"   + step_b_str  + 
-                          " F_"   + step_f_str  + 
-                          " G_"   + step_g_str  + 
-                          " G1_"  + step_g1_str +
-                          " L_"   + step_l_str  +
-                          " Area_" + step_area_str
+      step_group_name   = '-PDE <°_' + (step_angle * 180 / Math::PI).round.to_s + 
+                          ' R_'   + step_r_str  + 
+                          ' A_'   + step_a_str  + 
+                          ' A1_'  + step_a1_str +
+                          ' B_'   + step_b_str  + 
+                          ' F_'   + step_f_str  + 
+                          ' G_'   + step_g_str  + 
+                          ' G1_'  + step_g1_str +
+                          ' L_'   + step_l_str  +
+                          ' Area_' + step_area_str
 
       existing_component = model.definitions[step_group_name]
       if existing_component

@@ -1,31 +1,40 @@
 module Pants
   def self.run
     # Rectangular pants
-    # Version Beta 2
+    # Version Beta 3
     # Bugs:
+    # To do: MORE TESTING IS REQUIRED !!!!
+
+    # v3 changes:
+    # Removed mm from dialog box
 
     # Get a reference to the current active model
     model = Sketchup.active_model
 
     # Declare variables (initial values)
-    pant_a    = 500.mm
-    pant_b    = 300.mm
-    pant_c    = 300.mm
-    pant_d    = 350.mm
-    pant_e    = 100.mm
-    pant_h    = 100.mm
-    pant_l    = 400.mm
-    pant_g    = 25.mm
-    pant_g1   = 25.mm 
+    pant_a    = 500
+    pant_b    = 300
+    pant_c    = 300
+    pant_d    = 350
+    pant_e    = 100
+    pant_h    = 100
+    pant_l    = 400
+    pant_g    = 25
+    pant_g1   = 25 
     pant_area = 0.0
     filter_message      = false
-    conversion_factor   = 0.00064516
     area_square_inches  = 0.0
+
+    # Constants
+    conversion_factor   = 0.00064516
+    min_size            = 100
+    min_g               = 25
+    min_h               = 50
 
     # Create a custom dialog box and retrieve user input
     def self.get_user_input(defaults)
-      prompts = ['A (mm):', 'B (mm):', 'C (mm):', 'D (mm):', 'E (mm):', 'H (mm):', 'L (mm):', 'G (mm):', 'G1 (mm):']
-      results = UI.inputbox(prompts, defaults, 'Enter Values for Pant')
+      prompts = ['A [mm]:', 'B [mm]:', 'C [mm]:', 'D [mm]:', 'E [mm]:', 'H [mm]:', 'L [mm]:', 'G [mm]:', 'G1 [mm]:']
+      results = UI.inputbox(prompts, defaults, 'Enter Values for Pants')
       return results.map(&:to_f) if results
     end
 
@@ -42,15 +51,15 @@ module Pants
       end
 
       # Extract values from user input
-      pant_a, pant_b, pant_c, pant_d, pant_e, pant_h, pant_l, pant_g, pant_g1 = user_input[0..8].map { |value| value.inch }
+      pant_a, pant_b, pant_c, pant_d, pant_e, pant_h, pant_l, pant_g, pant_g1 = user_input[0..8].map { |value| value }
 
       # Check if variables are valid
       # a, b, c, d >= 100 mm,
       # h > 50 mm
       # L > 100 mm, 
       # e, g, g1 >=25 mm
-      if  pant_a < 100.mm && pant_b < 100.mm && pant_c < 100.mm && pant_d < 100.mm && 
-          pant_h < 50.mm && pant_l < 100.mm && pant_g < 25.mm && pant_g1 < 25.mm && pant_e < 25.mm
+      if  pant_a < min_size && pant_b < min_size && pant_c < min_size && pant_d < min_size && 
+          pant_h < min_h && pant_l < min_size && pant_g < min_g && pant_g1 < min_g && pant_e < min_g
         msg = 
         'Invalid values detected!!! 
         
@@ -63,11 +72,19 @@ module Pants
         return
       end
 
-      # Create a new group
+      # Create a new group & Get the group entities
       group = model.active_entities.add_group
-
-      # Get the group entities
       group_entities = group.entities
+
+      pant_a    = pant_a.mm
+      pant_b    = pant_b.mm
+      pant_c    = pant_c.mm
+      pant_d    = pant_d.mm
+      pant_e    = pant_e.mm
+      pant_h    = pant_h.mm
+      pant_l    = pant_l.mm
+      pant_g    = pant_g.mm
+      pant_g1   = pant_g1.mm
 
       # Create the geometry inside the group
       point1  = Geom::Point3d.new(pant_a, 0, 0)
@@ -122,7 +139,7 @@ module Pants
       face2.erase!
       face3.erase!
 
-      # Set the name of the group, example: -RP A_500 B_300 C_300 D_350 E_100 H_100 G_25 G1_25 L_400 Area_0.3497
+      # Set the name of the group, example: -RP A_500 B_300 C_300 D_350 E_100 H_100 G_25 G1_25 L_400 Area_0.8201
       pant_a_str       = pant_a.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       pant_b_str       = pant_b.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       pant_c_str       = pant_c.to_s.gsub(/\s+/, "").gsub(/mm/, "")

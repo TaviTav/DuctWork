@@ -1,30 +1,39 @@
 module Reduction
   def self.run
     # Rectangular reduction
-    # Version Beta 3
+    # Version Beta 4
     # Bugs:
+    # To do:
+
+    # v4 changes:
+    # Removed mm from dialog box
+    # L is required in dialog box 
 
     # Get a reference to the current active model
     model = Sketchup.active_model
 
     # Declare variables (initial values)
-    red_a     = 400.mm
-    red_b     = 200.mm
-    red_c     = 200.mm
-    red_d     = 400.mm
-    red_e     = 0.mm
-    red_f     = 0.mm
-    red_g     = 25.mm
-    red_g1    = 25.mm
-    red_l     = 200.mm
+    red_a     = 400
+    red_b     = 200
+    red_c     = 200
+    red_d     = 400
+    red_e     = 0
+    red_f     = 0
+    red_g     = 25
+    red_g1    = 25
+    red_l     = 250
     red_area  = 0.0
     filter_message      = false
-    conversion_factor   = 0.00064516
     area_square_inches  = 0.0
+
+    # Constants
+    conversion_factor   = 0.00064516
+    min_size            = 100
+    min_g               = 25
 
     # Create a custom dialog box and retrieve user input
     def self.get_user_input(defaults)
-      prompts = ['A (mm):', 'B (mm):', 'C (mm):', 'D (mm):', 'E (mm):', 'F (mm):', 'G (mm):', 'G1 (mm):', 'Lred (mm):']
+      prompts = ['A [mm]:', 'B [mm]:', 'C [mm]:', 'D [mm]:', 'E [mm]:', 'F [mm]:', 'G [mm]:', 'G1 [mm]:', 'L [mm]:']
       results = UI.inputbox(prompts, defaults, 'Enter Values for Reduction')
       return results.map(&:to_f) if results
     end
@@ -42,19 +51,19 @@ module Reduction
       end
 
       # Extract values from user input
-      red_a, red_b, red_c, red_d, red_e, red_f, red_g, red_g1, red_l = user_input[0..8].map { |value| value.inch }
+      red_a, red_b, red_c, red_d, red_e, red_f, red_g, red_g1, red_l = user_input[0..8].map { |value| value }
 
       # Check if values are valid
       # A, B, C, D, L >= 100 mm, 
       # G, G1 > 0 
-      if  red_a < 100.mm && red_b < 100.mm && red_c < 100.mm && red_d < 100.mm && 
-          red_g < 25.mm && red_g1 < 25.mm && red_l < 100.mm 
+      if  red_a < min_size && red_b < min_size && red_c < min_size && red_d < min_size && 
+          red_g < min_g && red_g1 < min_g && red_l < min_size 
         msg = 
         'Invalid values detected!!! 
         
         Check the following conditions:
-        A, B, C, D, L > 100 mm
-        G, G1 >= 25 mm'
+        A, B, C, D, L > ' + min_size.to_s.gsub(/\s+/, "") +  
+        'G, G1 >= ' + min_g.to_s.gsub(/\s+/, "") + 
         UI.messagebox(msg)
         filter_message = true
         return
@@ -65,6 +74,15 @@ module Reduction
       
       # Get the group entities
       group_entities = group.entities
+      red_a     = red_a.mm
+      red_b     = red_b.mm
+      red_c     = red_c.mm
+      red_d     = red_d.mm
+      red_e     = red_e.mm
+      red_f     = red_f.mm
+      red_g     = red_g.mm
+      red_g1    = red_g1.mm
+      red_l     = red_l.mm
 
       # Create the geometry inside the group
       point1  = Geom::Point3d.new(red_a, 0, 0)
@@ -74,14 +92,14 @@ module Reduction
       point5  = Geom::Point3d.new(red_a, 0, red_b)
       point6  = Geom::Point3d.new(0, red_g, red_b)
       point7  = Geom::Point3d.new(red_a, red_g, red_b)
-      point8  = Geom::Point3d.new(red_e, red_g + red_l, red_f)
-      point9  = Geom::Point3d.new(red_e + red_c, red_g + red_l, red_f)
-      point10 = Geom::Point3d.new(red_e, red_g + red_l, red_f + red_d)
-      point11 = Geom::Point3d.new(red_e + red_c, red_g + red_l, red_f + red_d)
-      point12 = Geom::Point3d.new(red_e, red_g + red_l + red_g1, red_f)
-      point13 = Geom::Point3d.new(red_e + red_c, red_g + red_l + red_g1, red_f)
-      point14 = Geom::Point3d.new(red_e, red_g + red_l + red_g1, red_f + red_d)
-      point15 = Geom::Point3d.new(red_e + red_c, red_g + red_l + red_g1, red_f + red_d)
+      point8  = Geom::Point3d.new(red_e, red_l - red_g1, red_f)
+      point9  = Geom::Point3d.new(red_e + red_c, red_l - red_g1, red_f)
+      point10 = Geom::Point3d.new(red_e, red_l - red_g1, red_f + red_d)
+      point11 = Geom::Point3d.new(red_e + red_c, red_l - red_g1, red_f + red_d)
+      point12 = Geom::Point3d.new(red_e, red_l, red_f)
+      point13 = Geom::Point3d.new(red_e + red_c, red_l, red_f)
+      point14 = Geom::Point3d.new(red_e, red_l, red_f + red_d)
+      point15 = Geom::Point3d.new(red_e + red_c, red_l, red_f + red_d)
 
       face1   = group_entities.add_face ORIGIN, point1, point2, point3
       face2   = group_entities.add_face ORIGIN, point3, point6, point4
@@ -103,7 +121,6 @@ module Reduction
       red_area = area_square_inches * conversion_factor
 
       # Set the name of the group, example: -RED A_400 B_200 C_200 D_400 E_0 F_0 G_25 G1_25 L_250 Area_0.3497
-      red_l_total     = red_l + red_g + red_g1
       red_a_str       = red_a.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       red_b_str       = red_b.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       red_c_str       = red_c.to_s.gsub(/\s+/, "").gsub(/mm/, "")
@@ -113,7 +130,6 @@ module Reduction
       red_g_str       = red_g.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       red_g1_str      = red_g1.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       red_l_str       = red_l.to_s.gsub(/\s+/, "").gsub(/mm/, "")
-      red_l_total_str = red_l_total.inch.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       red_area_str    = red_area.round(4).to_s
 
       red_group_name  = "-RED A_" + red_a_str + 
@@ -124,7 +140,7 @@ module Reduction
                         " F_"     + red_f_str + 
                         " G_"     + red_g_str + 
                         " G1_"    + red_g1_str + 
-                        " L_"     + red_l_total_str + 
+                        " L_"     + red_l_str + 
                         " Area_"  + red_area_str
 
       existing_component = model.definitions[red_group_name]
