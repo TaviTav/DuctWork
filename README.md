@@ -26,14 +26,13 @@ Step:<br>
 ![Step](<img/Step cheatsheet.png>)<br><br>
 
 Section Change:<br>
-Note: 
+Note:<br>
 Concentric will align the round side in the middle of rectangular side<br>
-Excentric will align the round side in the middle of A side and bottom of B side (XY plane)
+Excentric will align the round side in the middle of A side and bottom of B side (round side will touch XY plane)
 ![SC](<img/SC cheatsheet.png>)<br><br>
 
 Duct:<br>
 ![Duct](<img/Duct cheatsheet.png>)<br><br>
-
 
 License <a href="https://github.com/ErikMcClure/bad-licenses/blob/master/happy-bunny-license">Happy Bunny License</a> <br> <br> <br>
 <hr width="90%" /> <br> <br>
