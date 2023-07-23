@@ -1,7 +1,7 @@
 module Elbow
   def self.run
     # Rectangular elbow
-    # Version Beta v6
+    # Version Beta v7
     # Bugs:
     # To do: Erase stray edges, CleanUp picks up too many edges, i think it's my fault :)
     # To do: MORE TESTING IS REQUIRED !!!!

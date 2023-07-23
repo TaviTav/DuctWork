@@ -25,6 +25,12 @@ Pants:<br>
 Step:<br>
 ![Step](<img/Step cheatsheet.png>)<br><br>
 
+Section Change:<br>
+Note: 
+Concentric will align the round side in the middle of rectangular side<br>
+Excentric will align the round side in the middle of A side and bottom of B side (XY plane)
+![SC](<img/SC cheatsheet.png>)<br><br>
+
 Duct:<br>
 ![Duct](<img/Duct cheatsheet.png>)<br><br>
 

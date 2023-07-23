@@ -7,6 +7,7 @@ require_relative 'Reduction v4.rb'
 require_relative 'Tee v3.rb'
 require_relative 'Pants v3.rb'
 require_relative 'Step v4.rb'
+require_relative 'SC v1.rb'
 
 # Define the module and method for creating the menu items
 module Tav_Extensions
@@ -41,12 +42,10 @@ module Tav_Extensions
       Step.run
     end
 
-    # # Work in progress
-    # def self.ramification_elbow_channel_function
-    #   UI.messagebox('Ramification elbow channel menu item clicked!')
-    #   # Add your ramification elbow channel functionality here
-    #   # ...
-    # end
+    # Done
+    def self.section_change_function
+      SC.run
+    end
 
     # # Work in progress
     # def self.ramification_elbow_elbow_function
@@ -69,7 +68,7 @@ module Tav_Extensions
       create_menu_item('Tee', &method(:tee_function))
       create_menu_item('Pants', &method(:ramification_pants_function))
       create_menu_item('Step', &method(:step_function))
-      # create_menu_item('Ramification elbow channel', &method(:ramification_elbow_channel_function))
+      create_menu_item('Section Change', &method(:section_change_function))
       # create_menu_item('Ramification elbow elbow', &method(:ramification_elbow_elbow_function))
       create_menu_item('Help', &method(:help))
       
