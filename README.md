@@ -32,9 +32,16 @@ Concentric will align the round side in the middle of rectangular side <br>
 Excentric will align the round side in the middle of A side and bottom of B side (round side will touch XY plane)
 ![SC](<img/SC cheatsheet.png>) <br> <br>
 
-Duct: <br>
+Duct (not available): <br>
 ![Duct](<img/Duct cheatsheet.png>) <br> <br>
 
+
+To Do: Cross, Duct <br> <br>
+
+Known Bugs: <br> 
+Tee - G & G1 value bug <br>
+SSC - excentric, concentric bug <br>
+<br><br>
 License <a href="https://github.com/ErikMcClure/bad-licenses/blob/master/happy-bunny-license">Happy Bunny License</a> <br> <br> <br>
 <hr width="90%" /> <br> <br>
 Other unfinished projects: https://ductulator.org/

@@ -2,7 +2,7 @@ module Tee
   def self.run
     # Rectangular tee
     # Version Beta 3
-    # Bugs:
+    # Bugs: G, G1 values breaks the tee
     # To do:
 
     # v3 changes:
