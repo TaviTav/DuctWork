@@ -1,12 +1,18 @@
+# Rectangular tee
+# Version Beta 4
+# Bugs:
+# To do: MORE TESTING IS REQUIRED !!!!
+# To do: Add dimension L on picture in documentation
+
+# v4 changes:
+# Adding attributes to the component
+# Small code improvements
+# Fixed bug when G<>G1 breaks the tee
+
+require_relative 'AttrCreate.rb'
+
 module Tee
   def self.run
-    # Rectangular tee
-    # Version Beta 3
-    # Bugs: G, G1 values breaks the tee
-    # To do:
-
-    # v3 changes:
-    # Removed mm from dialog box
 
     # Get a reference to the current active model
     model = Sketchup.active_model
@@ -27,8 +33,10 @@ module Tee
 
     # Constants
     conversion_factor   = 0.00064516
-    min_size            = 100
+    min_size            = 150
     min_g               = 25
+    componentUnits      = 'CENTIMETERS'
+    teeItemCode        = 'TRE'
 
     # Create a custom dialog box and retrieve user input
     def self.get_user_input(defaults)
@@ -53,7 +61,7 @@ module Tee
       tee_a, tee_b, tee_c, tee_g, tee_g1, tee_r = user_input[0..5].map { |value| value }
 
       # Check if variables are valid
-      # a, b, c > 100 mm, 
+      # a, b, c > 150 mm, 
       # g, g1 > 25 mm
       # r >= 0
       if tee_a < min_size && tee_b < min_size && tee_c < min_size && 
@@ -70,16 +78,13 @@ module Tee
         return
       end
 
-      # Create a new group
+      # Create a new group & Get the group entities
       group = model.active_entities.add_group
-
-      # Get the group entities
       group_entities = group.entities
       
-      # Find the length of the tee
-      tee_l = 2 * tee_r + 2 * tee_g + tee_a
+      # Find the length of the tee & Make values available as length
+      tee_l = 2 * tee_r + 2 * tee_g1 + tee_a
       tee_l = tee_l.mm
-
       tee_a     = tee_a.mm
       tee_b     = tee_b.mm
       tee_c     = tee_c.mm
@@ -156,7 +161,7 @@ module Tee
       face2.erase!
       face3.erase!
 
-      # Set the name of the group, example: -TR R_100 A_300 B_300 C_300 G_25 G1_25 L_550 Area_0.7029
+      # Set the name of the group, example: -TRE R_100 A_300 B_300 C_300 G_25 G1_25 L_550 Area_0.7029
       tee_r_str       = tee_r.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       tee_a_str       = tee_a.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       tee_b_str       = tee_b.to_s.gsub(/\s+/, "").gsub(/mm/, "")
@@ -166,7 +171,7 @@ module Tee
       tee_l_str       = tee_l.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       tee_area_str    = tee_area.round(4).to_s
 
-      tee_group_name  = "-TR R_"  + tee_r_str   +
+      tee_group_name  = "-" + teeItemCode + " R_"  + tee_r_str +
                           " A_"   + tee_a_str   +
                           " B_"   + tee_b_str   + 
                           " C_"   + tee_c_str   + 
@@ -175,6 +180,7 @@ module Tee
                           " L_"   + tee_l_str   + 
                           " Area_" + tee_area_str
         
+      # Check if the component is present in the model
       existing_component = model.definitions[tee_group_name]
       if existing_component
         group.erase!
@@ -184,12 +190,26 @@ module Tee
           component_new_instance = model.active_entities.add_instance(Sketchup.active_model.definitions[tee_group_name], trans)
           number = Sketchup.active_model.definitions[tee_group_name].count_instances
           component_new_instance.name = number.to_s
-      else
-        # group.name = elbow_group_name
+      else # Add component and it's attributes
+
         component_instance = group.to_component
-        definition = component_instance.definition
-        definition.name = tee_group_name
-        component_instance.name = '1'
+        comp_def = component_instance.definition
+        comp_def.name = tee_group_name
+
+        AttrCreate.CreateGeneralAttributes(comp_def, componentUnits, teeItemCode)
+
+        AttrCreate.CreateDimensionAttributes(comp_def, 'a', tee_a_str, 'STRING', 'A', 'A[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'b', tee_b_str, 'STRING', 'B', 'B[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'c', tee_c_str, 'STRING', 'C', 'C[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'g', tee_g_str, 'STRING', 'G', 'G[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'g1', tee_g1_str, 'STRING', 'G1', 'G1[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'r', tee_r_str, 'STRING', 'R', 'R[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'l', tee_l_str, 'STRING', 'L', 'L[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'uarea', tee_area_str, 'STRING', 'Area', 'Area[m2]', 'VIEW')
+        AttrCreate.CreateFormulaAttributes(comp_def, 'uairspeed', 'STRING', 'uAirSpeed', 'Air Speed[m/s]', 'VIEW', 'uairflow/3600/(b*c/1000000)')
+
+        dcs = $dc_observers.get_latest_class
+        dcs.redraw_with_undo(component_instance)
       end
 
     rescue => e

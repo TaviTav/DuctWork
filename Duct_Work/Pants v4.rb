@@ -1,12 +1,16 @@
+# Rectangular pants
+# Version Beta 4
+# Bugs:
+# To do: MORE TESTING IS REQUIRED !!!!
+
+# v4 changes:
+# Adding attributes to the component
+# Small code improvements
+
+require_relative 'AttrCreate.rb'
+
 module Pants
   def self.run
-    # Rectangular pants
-    # Version Beta 3
-    # Bugs:
-    # To do: MORE TESTING IS REQUIRED !!!!
-
-    # v3 changes:
-    # Removed mm from dialog box
 
     # Get a reference to the current active model
     model = Sketchup.active_model
@@ -27,9 +31,11 @@ module Pants
 
     # Constants
     conversion_factor   = 0.00064516
-    min_size            = 100
+    min_size            = 150
     min_g               = 25
     min_h               = 50
+    componentUnits      = 'CENTIMETERS'
+    pantItemCode        = 'REP'
 
     # Create a custom dialog box and retrieve user input
     def self.get_user_input(defaults)
@@ -54,9 +60,9 @@ module Pants
       pant_a, pant_b, pant_c, pant_d, pant_e, pant_h, pant_l, pant_g, pant_g1 = user_input[0..8].map { |value| value }
 
       # Check if variables are valid
-      # a, b, c, d >= 100 mm,
+      # a, b, c, d >= 150 mm,
       # h > 50 mm
-      # L > 100 mm, 
+      # L > 200 mm, 
       # e, g, g1 >=25 mm
       if  pant_a < min_size && pant_b < min_size && pant_c < min_size && pant_d < min_size && 
           pant_h < min_h && pant_l < min_size && pant_g < min_g && pant_g1 < min_g && pant_e < min_g
@@ -64,9 +70,9 @@ module Pants
         'Invalid values detected!!! 
         
         Check the following conditions:
-        A, B, C, D, L > 100 mm 
-        H > 50 mm, 
-        E, G, G1 >= 25 mm'
+        A, B, C, D, L >= '  + min_size.to_s.gsub(/\s+/, "") + 
+        'H >= '             + min_g.to_s.gsub(/\s+/, "") +
+        'E, G, G1 >= '      + min_g.to_s.gsub(/\s+/, "")
         UI.messagebox(msg)
         filter_message = true
         return
@@ -76,6 +82,7 @@ module Pants
       group = model.active_entities.add_group
       group_entities = group.entities
 
+      # Make values available as length
       pant_a    = pant_a.mm
       pant_b    = pant_b.mm
       pant_c    = pant_c.mm
@@ -151,7 +158,7 @@ module Pants
       pant_l_str       = pant_l.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       pant_area_str    = pant_area.round(4).to_s
 
-      pant_group_name  = "-RP A_"  + pant_a_str  + 
+      pant_group_name  = "-" + pantItemCode + " A_"  + pant_a_str  + 
                         " B_"     + pant_b_str  + 
                         " C_"     + pant_c_str  + 
                         " D_"     + pant_d_str  + 
@@ -162,6 +169,7 @@ module Pants
                         " L_"     + pant_l_str  + 
                         " Area_"  + pant_area_str
 
+      # Check if the component is present in the model
       existing_component = model.definitions[pant_group_name]
       if existing_component
         group.erase!
@@ -171,12 +179,28 @@ module Pants
           component_new_instance = model.active_entities.add_instance(Sketchup.active_model.definitions[pant_group_name], trans)
           number = Sketchup.active_model.definitions[pant_group_name].count_instances
           component_new_instance.name = number.to_s
-      else
-        # group.name = elbow_group_name
+      else # Add component and it's attributes
+
         component_instance = group.to_component
-        definition = component_instance.definition
-        definition.name = pant_group_name
-        component_instance.name = '1'
+        comp_def = component_instance.definition
+        comp_def.name = pant_group_name
+
+        AttrCreate.CreateGeneralAttributes(comp_def, componentUnits, pantItemCode)
+
+        AttrCreate.CreateDimensionAttributes(comp_def, 'a', pant_a_str, 'STRING', 'A', 'A[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'b', pant_b_str, 'STRING', 'B', 'B[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'c', pant_c_str, 'STRING', 'C', 'C[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'd', pant_d_str, 'STRING', 'D', 'D[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'e', pant_e_str, 'STRING', 'E', 'E[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'h', pant_h_str, 'STRING', 'H', 'H[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'g', pant_g_str, 'STRING', 'G', 'G[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'g1', pant_g1_str, 'STRING', 'G1', 'G1[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'l', pant_l_str, 'STRING', 'L', 'L[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'uarea', pant_area_str, 'STRING', 'Area', 'Area[m2]', 'VIEW')
+        AttrCreate.CreateFormulaAttributes(comp_def, 'uairspeed', 'STRING', 'uAirSpeed', 'Air Speed[m/s]', 'VIEW', 'uairflow/3600/(a*b/1000000)')
+
+        dcs = $dc_observers.get_latest_class
+        dcs.redraw_with_undo(component_instance)
       end
 
     rescue => e

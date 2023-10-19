@@ -1,12 +1,18 @@
+# Rectangular step offset
+# Version Beta 5
+# Bugs:
+# To do: MORE TESTING IS REQUIRED !!!!
+# To do: 
+
+# v5 changes:
+# Adding attributes to the component
+# Small code improvements
+# Dimension L on picture in documentation
+
+require_relative 'AttrCreate.rb'
+
 module Step
   def self.run
-    # Rectangular step
-    # Version Beta 4
-    # Bugs:
-    # To do: MORE TESTING IS REQUIRED !!!!
-
-    # v4 changes:
-    # Removed mm from dialog box
 
     # Get a reference to the current active model
     model = Sketchup.active_model
@@ -29,14 +35,17 @@ module Step
 
     # Constants
     conversion_factor   = 0.00064516
-    min_size            = 100
+    min_size            = 150
     min_g               = 25
     min_f               = 50
+    componentUnits      = 'CENTIMETERS'
+    stepItemCode        = 'RSO'    
+
 
     # Create a custom dialog box and retrieve user input
     def self.get_user_input(defaults)
       prompts = ['A [mm]:', 'A1 [mm]:', 'B [mm]:', 'F [mm]:', 'G [mm]:', 'G1 [mm]:', 'R [mm]:', '<° (degrees):']
-      results = UI.inputbox(prompts, defaults, 'Enter Values for Step')
+      results = UI.inputbox(prompts, defaults, 'Enter Values for Step/Offset')
       return results.map(&:to_f) if results
     end
 
@@ -88,6 +97,7 @@ module Step
       group = model.active_entities.add_group
       group_entities = group.entities
 
+      # Make values available as length
       step_a    = step_a.mm
       step_a1   = step_a1.mm
       step_b    = step_b.mm
@@ -286,7 +296,7 @@ module Step
       end
 
       # Set the name of the group, example: 
-      # -PDE <°_30 R_100 A_500 A1_400 B_300 F_250 G_25 G1_25 L_711 Area_1.2239
+      # -RSO <°_30 R_100 A_500 A1_400 B_300 F_250 G_25 G1_25 L_711 Area_1.2239
       step_l            = p05.y.round(0)
       step_r_str        = step_r.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       step_a_str        = step_a.to_s.gsub(/\s+/, "").gsub(/mm/, "")
@@ -297,8 +307,9 @@ module Step
       step_g1_str       = step_g1.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       step_l_str        = step_l.inch.to_s.gsub(/\s+/, "").gsub(/mm/, "").gsub(/~/, "")
       step_area_str     = step_area.round(4).to_s
+      step_angle_str    = (step_angle * 180 / Math::PI).round.to_s
 
-      step_group_name   = '-PDE <°_' + (step_angle * 180 / Math::PI).round.to_s + 
+      step_group_name   = '-' + stepItemCode + ' Angle_' + step_angle_str + '°'+ 
                           ' R_'   + step_r_str  + 
                           ' A_'   + step_a_str  + 
                           ' A1_'  + step_a1_str +
@@ -309,6 +320,7 @@ module Step
                           ' L_'   + step_l_str  +
                           ' Area_' + step_area_str
 
+      # Check if the component is present in the model
       existing_component = model.definitions[step_group_name]
       if existing_component
         group.erase!
@@ -319,12 +331,28 @@ module Step
           component_new_instance = model.active_entities.add_instance(Sketchup.active_model.definitions[step_group_name], trans)
           number = Sketchup.active_model.definitions[step_group_name].count_instances
           component_new_instance.name = number.to_s
-      else
-        # group.name = step_group_name
+      else # Add component and it's attributes
         component_instance = group.to_component
-        definition = component_instance.definition
-        definition.name = step_group_name
-        component_instance.name = '1'
+        comp_def = component_instance.definition
+        comp_def.name = step_group_name
+
+        AttrCreate.CreateGeneralAttributes(comp_def, componentUnits, stepItemCode)
+
+        AttrCreate.CreateDimensionAttributes(comp_def, 'a', step_a_str, 'STRING', 'A', 'A[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'a1', step_a1_str, 'STRING', 'A1', 'A1[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'b', step_b_str, 'STRING', 'B', 'B[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'f', step_f_str, 'STRING', 'F', 'F[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'g', step_g_str, 'STRING', 'G', 'G[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'g1', step_g1_str, 'STRING', 'G1', 'G1[mm]', 'VIEW')   
+        AttrCreate.CreateDimensionAttributes(comp_def, 'l', step_l_str, 'STRING', 'L', 'L[mm]', 'VIEW')     
+        AttrCreate.CreateDimensionAttributes(comp_def, 'r', step_r_str, 'STRING', 'R', 'R[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'angle', step_angle_str, 'STRING', 'Angle', 'Angle[°]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'uarea', step_area_str, 'STRING', 'Area', 'Area[m2]', 'VIEW')
+
+        AttrCreate.CreateFormulaAttributes(comp_def, 'uairspeed', 'STRING', 'uAirSpeed', 'Air Speed[m/s]', 'VIEW', 'uairflow/3600/(smallest(a,a1)*b/1000000)')
+
+        dcs = $dc_observers.get_latest_class
+        dcs.redraw_with_undo(component_instance)
       end
 
     rescue => e

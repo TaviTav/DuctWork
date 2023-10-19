@@ -1,13 +1,16 @@
+# Rectangular reduction
+# Version Beta 5
+# Bugs:
+# To do: MORE TESTING IS REQUIRED !!!!
+
+# v5 changes:
+# Adding attributes to the component
+# Small code improvements
+
+require_relative 'AttrCreate.rb'
+
 module Reduction
   def self.run
-    # Rectangular reduction
-    # Version Beta 4
-    # Bugs:
-    # To do:
-
-    # v4 changes:
-    # Removed mm from dialog box
-    # L is required in dialog box 
 
     # Get a reference to the current active model
     model = Sketchup.active_model
@@ -28,8 +31,10 @@ module Reduction
 
     # Constants
     conversion_factor   = 0.00064516
-    min_size            = 100
+    min_size            = 150
     min_g               = 25
+    componentUnits      = 'CENTIMETERS'
+    redItemCode         = 'RED'
 
     # Create a custom dialog box and retrieve user input
     def self.get_user_input(defaults)
@@ -69,11 +74,11 @@ module Reduction
         return
       end
 
-      # Create a new group
+      # Create a new group & Get the group entities
       group = model.active_entities.add_group
-      
-      # Get the group entities
       group_entities = group.entities
+
+      # Make values available as length
       red_a     = red_a.mm
       red_b     = red_b.mm
       red_c     = red_c.mm
@@ -132,7 +137,7 @@ module Reduction
       red_l_str       = red_l.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       red_area_str    = red_area.round(4).to_s
 
-      red_group_name  = "-RED A_" + red_a_str + 
+      red_group_name  = "-" + redItemCode + " A_" + red_a_str + 
                         " B_"     + red_b_str + 
                         " C_"     + red_c_str + 
                         " D_"     + red_d_str + 
@@ -143,6 +148,7 @@ module Reduction
                         " L_"     + red_l_str + 
                         " Area_"  + red_area_str
 
+      # Check if the component is present in the model
       existing_component = model.definitions[red_group_name]
       if existing_component
         group.erase!
@@ -152,12 +158,28 @@ module Reduction
           component_new_instance = model.active_entities.add_instance(Sketchup.active_model.definitions[red_group_name], trans)
           number = Sketchup.active_model.definitions[red_group_name].count_instances
           component_new_instance.name = number.to_s
-      else
-        # group.name = elbow_group_name
+      else # Add component and it's attributes
         component_instance = group.to_component
-        definition = component_instance.definition
-        definition.name = red_group_name
-        component_instance.name = '1'
+        comp_def = component_instance.definition
+        comp_def.name = red_group_name
+
+        AttrCreate.CreateGeneralAttributes(comp_def, componentUnits, redItemCode)
+
+        AttrCreate.CreateDimensionAttributes(comp_def, 'a', red_a_str, 'STRING', 'A', 'A[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'b', red_b_str, 'STRING', 'B', 'B[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'c', red_c_str, 'STRING', 'C', 'C[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'd', red_d_str, 'STRING', 'D', 'D[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'e', red_e_str, 'STRING', 'E', 'E[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'f', red_f_str, 'STRING', 'F', 'F[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'g', red_g_str, 'STRING', 'G', 'G[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'g1', red_g1_str, 'STRING', 'G1', 'G1[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'l', red_l_str, 'STRING', 'L', 'L[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'uarea', red_area_str, 'STRING', 'Area', 'Area[m2]', 'VIEW')
+
+        AttrCreate.CreateFormulaAttributes(comp_def, 'uairspeed', 'STRING', 'uAirSpeed', 'Air Speed[m/s]', 'VIEW', 'uairflow/3600/(smallest(a*b,c*d)/1000000)')
+
+        dcs = $dc_observers.get_latest_class
+        dcs.redraw_with_undo(component_instance)
       end
 
     rescue => e

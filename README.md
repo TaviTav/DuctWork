@@ -46,20 +46,43 @@ Concentric will align the round side in the middle of rectangular side <br>
 Excentric will align the round side in the middle of A side and bottom of B side (round side will touch XY plane)
 ![SC](<img/SC cheatsheet.png>) <br> <br>
 
-___Duct (not available):___ <br>
+___End Cap:___ <br>
+Note: <br>
+Only one time the component has to be created. After that you have to copy it as many times you need then use Component Option window to change dimensions <br>
+![EndCap](<img/End Cap cheatsheet.png>) <br> <br> 
+
+___Duct:___ <br>
+Note: <br>
+Only one time the component has to be created. After that you have to copy it as many times you need then use Component Option window to change dimensions <br>
 ![Duct](<img/Duct cheatsheet.png>) <br> <br>
 
 
 ## To Do:
 ### Geometry:
-Cross, Duct <br> 
+Rectangular Cross <br> 
+Flexible duct between two points <br> 
+Round spiro duct and fitting <br> 
 ### Improvements:
-Add Component Attributes <br><br>
+Auto label a group of components<br>
+Auto place text tags with label for a group of components<br>
+Import csv<br>
+Calculate pressure loss<br>
+Extension Toolbar <br><br>
 
 ## Known Bugs:
-__Tee__ - G & G1 value bug <br>
-__SSC__ - excentric, concentric bug <br>
-<br><br>
+Loading...<br><br>
+
+## Example:
+The model is in the example folder. <br>
+Group the components you want to generate report. <br> 
+Open Sketchup native Generate report under the File menu. <br>
+Import report DuctWork.grt <br>
+Select the group then run report DuctWork <br>
+![ISO1](<img/example iso1.png>) <br> <br>
+![ISO2](<img/example iso2.png>) <br> <br>
+![TOP](<img/example top.png>) <br> <br>
+![SIDE](<img/example side.png>) <br> <br>
+![REPORT](<img/report.png>) <br> <br>
 
 <hr width="90%" /> <br>
 License <a href="https://github.com/ErikMcClure/bad-licenses/blob/master/happy-bunny-license">Happy Bunny License</a> <br> <br> <br>

@@ -7,7 +7,7 @@ module Tav_Extensions
 
     # Extension information
     EXT_NAME              = "Duct Work"
-    EXT_VERSION           = "Beta 1.3"
+    EXT_VERSION           = "Beta 1.4"
     EXT_TITLE             = "Rectangular air duct systems"
     EXT_DESCRIPTION       = "This extension helps HVAC engineers to build duct systems"
 

@@ -1,9 +1,16 @@
+# Section Change Concentric or Excentric
+# Version Beta 2
+# Bugs:
+# To do: MORE TESTING IS REQUIRED !!!!
+
+# v2 changes:
+# Adding attributes to the component
+# Small code improvements
+# Bug fixed
+require_relative 'AttrCreate.rb'
+
 module SC
   def self.run
-    # Section Change Concentric or Excentric
-    # Version Beta 1
-    # Bugs:
-    # To do:
 
     # Get a reference to the current active model
     model = Sketchup.active_model
@@ -23,8 +30,10 @@ module SC
 
     # Constants
     conversion_factor   = 0.00064516
-    min_size            = 100
+    min_size            = 150
     min_g               = 25
+    componentUnits      = 'CENTIMETERS'
+    scItemCode          = 'SC'
 
     # Create a custom dialog box and retrieve user input
     def self.get_user_input(defaults)
@@ -49,7 +58,7 @@ module SC
       ssc_a, ssc_b, ssc_d, ssc_g, ssc_g1, ssc_l, ssc_exc = user_input[0..6].map { |value| value }
 
       # Check if variables are valid
-      # a, b, d > 100 mm, 
+      # a, b, d > 150 mm, 
       # g, g1 > 25 mm
       # L >= g + g1
       if ssc_a < min_size && ssc_b < min_size && ssc_d < min_size && 
@@ -177,7 +186,7 @@ module SC
       face11  = group_entities.add_face(edges11)
 
       if ssc_exc == 1
-        ssc_str = 'Con'
+        ssc_str = 'C'
         ssc_b_dist = (ssc_b - ssc_d) / 2
         p20 = Geom::Point3d.new(0, -ssc_b_dist, ssc_g)
         v3 = Geom::Vector3d.new(0, ssc_b_dist, 0) # Move parallel to Y axis
@@ -186,7 +195,7 @@ module SC
         group_entities.transform_entities(tr3_1, face9)
         group_entities.transform_entities(tr3_2, face11)
       else
-        ssc_str = 'Exc'
+        ssc_str = 'E'
         ssc_b_dist = ssc_b - ssc_d
         p20 = Geom::Point3d.new(0, 0, ssc_g)
         v3 = Geom::Vector3d.new(0, ssc_b_dist, 0) # Move parallel to Y axis
@@ -194,7 +203,7 @@ module SC
         tr3_2 = Geom::Transformation.translation(v3)
         group_entities.transform_entities(tr3_1, face9)
       end
-
+      scItemCode = scItemCode + ssc_str
       # Identify the face we want to delete
       # circle_face is defined by 3 points, p1, p3, p5 elevated with ssc_l - ssc_g1
       circle_face = nil
@@ -223,7 +232,7 @@ module SC
       ro = Geom::Transformation.rotation(ORIGIN, X_AXIS, -90.degrees)
       group_entities.transform_entities(ro, group_entities.to_a)
 
-      # Set the name of the group, example: -SC Con A_400 B_300 D_250 G_25 G1_25 L_300 Area_0.3392
+      # Set the name of the group, example: -SCC A_400 B_300 D_250 G_25 G1_25 L_300 Area_0.3392
       ssc_a_str       = ssc_a.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       ssc_b_str       = ssc_b.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       ssc_d_str       = ssc_d.to_s.gsub(/\s+/, "").gsub(/mm/, "")
@@ -232,7 +241,7 @@ module SC
       ssc_l_str       = ssc_l.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       ssc_area_str    = ssc_area.round(4).to_s
 
-      ssc_group_name  =   "-SC "      + ssc_str     +
+      ssc_group_name  =   "-" + scItemCode +
                           " A_"       + ssc_a_str   +
                           " B_"       + ssc_b_str   + 
                           " D_"       + ssc_d_str   + 
@@ -240,7 +249,8 @@ module SC
                           " G1_"      + ssc_g1_str  + 
                           " L_"       + ssc_l_str   + 
                           " Area_"    + ssc_area_str
-        
+
+      # Check if the component is present in the model
       existing_component = model.definitions[ssc_group_name]
       if existing_component
         group.erase!
@@ -250,11 +260,25 @@ module SC
           component_new_instance = model.active_entities.add_instance(Sketchup.active_model.definitions[ssc_group_name], trans)
           number = Sketchup.active_model.definitions[ssc_group_name].count_instances
           component_new_instance.name = number.to_s
-      else
+      else # Add component and it's attributes
         component_instance = group.to_component
-        definition = component_instance.definition
-        definition.name = ssc_group_name
-        component_instance.name = '1'
+        comp_def = component_instance.definition
+        comp_def.name = ssc_group_name
+
+        AttrCreate.CreateGeneralAttributes(comp_def, componentUnits, scItemCode)
+
+        AttrCreate.CreateDimensionAttributes(comp_def, 'a', ssc_a_str, 'STRING', 'A', 'A[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'b', ssc_b_str, 'STRING', 'B', 'B[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'd', ssc_d_str, 'STRING', 'D', 'D[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'g', ssc_g_str, 'STRING', 'G', 'G[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'g1', ssc_g1_str, 'STRING', 'G1', 'G1[mm]', 'VIEW')        
+        AttrCreate.CreateDimensionAttributes(comp_def, 'l', ssc_l_str, 'STRING', 'L', 'L[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'uarea', ssc_area_str, 'STRING', 'Area', 'Area[m2]', 'VIEW')
+
+        AttrCreate.CreateFormulaAttributes(comp_def, 'uairspeed', 'STRING', 'uAirSpeed', 'Air Speed[m/s]', 'VIEW', 'uairflow/3600/(smallest(a*b,PI()*d*d/4)/1000000)')
+
+        dcs = $dc_observers.get_latest_class
+        dcs.redraw_with_undo(component_instance)
       end
 
     rescue => e

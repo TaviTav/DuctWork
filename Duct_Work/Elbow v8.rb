@@ -1,13 +1,17 @@
+# Rectangular elbow
+# Version Beta v8
+# Bugs:
+# To do:
+# To do: MORE TESTING IS REQUIRED !!!!
+
+# v8 changes:
+# Adding attributes to the component
+# Small code improvements
+
+require_relative 'AttrCreate.rb'
+
 module Elbow
   def self.run
-    # Rectangular elbow
-    # Version Beta v7
-    # Bugs:
-    # To do: Erase stray edges, CleanUp picks up too many edges, i think it's my fault :)
-    # To do: MORE TESTING IS REQUIRED !!!!
-
-    # v7 changes:
-    # Removed mm from dialog box
 
     # Get a reference to the current active model
     model = Sketchup.active_model
@@ -27,9 +31,11 @@ module Elbow
     filter_message      = false
 
     # Constants
-    conversion_factor   = 0.00064516  # Global constant?
-    min_size        = 100.mm  # Global constant?
-    min_g           = 25.mm   # Global constant?
+    conversion_factor   = 0.00064516
+    min_size        = 150
+    min_g           = 25
+    componentUnits      = 'CENTIMETERS'
+    elbowItemCode        = 'REL'
 
     # Create a function for custom dialog box to retrieve user input
     def self.get_user_input(defaults)
@@ -88,6 +94,7 @@ module Elbow
       group = model.active_entities.add_group
       group_entities = group.entities
 
+      # Make values available as length
       elbow_a   = elbow_a.mm
       elbow_a1  = elbow_a1.mm
       elbow_b   = elbow_b.mm
@@ -235,7 +242,7 @@ module Elbow
         elbow_g, elbow_g1 = elbow_g1, elbow_g
       end
 
-      # Set the name of the group, example: -CR <°_90 R_100 A_300 A1_250 B_300 G_25 G1_25 Area_0.4937
+      # Set the name of the group, example: -REL <°_90 R_100 A_300 A1_250 B_300 G_25 G1_25 Area_0.4937
       elbow_r_str       = elbow_r.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       elbow_a_str       = elbow_a.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       elbow_a1_str      = elbow_a1.to_s.gsub(/\s+/, "").gsub(/mm/, "")
@@ -243,8 +250,9 @@ module Elbow
       elbow_g_str       = elbow_g.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       elbow_g1_str      = elbow_g1.to_s.gsub(/\s+/, "").gsub(/mm/, "")
       elbow_area_str    = elbow_area.round(4).to_s
+      elbow_angle_str   = (elbow_angle * 180 / Math::PI).round.to_s
 
-      elbow_group_name  = "-CR <°_" + (elbow_angle * 180 / Math::PI).round.to_s + 
+      elbow_group_name  = "-" + elbowItemCode + " Angle_" + elbow_angle_str + '°' +
                           " R_"   + elbow_r_str   + 
                           " A_"   + elbow_a_str   + 
                           " A1_"  + elbow_a1_str  + 
@@ -253,8 +261,9 @@ module Elbow
                           " G1_"  + elbow_g1_str  + 
                           " Area_"+ elbow_area_str
 
+      # Check if the component is present in the model
       existing_component = model.definitions[elbow_group_name]
-      if existing_component
+      if existing_component 
         group.erase!
         UI.messagebox('Another Component with the same name is in the model.
           A new instance of this component is placed in the model origin')
@@ -262,11 +271,26 @@ module Elbow
           component_new_instance = model.active_entities.add_instance(Sketchup.active_model.definitions[elbow_group_name], trans)
           number = Sketchup.active_model.definitions[elbow_group_name].count_instances
           component_new_instance.name = number.to_s
-      else
+      else # Add component and it's attributes
         component_instance = group.to_component
-        definition = component_instance.definition
-        definition.name = elbow_group_name
-        component_instance.name = '1'
+        comp_def = component_instance.definition
+        comp_def.name = elbow_group_name
+
+        AttrCreate.CreateGeneralAttributes(comp_def, componentUnits, elbowItemCode)
+
+        AttrCreate.CreateDimensionAttributes(comp_def, 'a', elbow_a_str, 'STRING', 'A', 'A[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'a1', elbow_a1_str, 'STRING', 'A1', 'A1[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'b', elbow_b_str, 'STRING', 'B', 'B[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'g', elbow_g_str, 'STRING', 'G', 'G[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'g1', elbow_g1_str, 'STRING', 'G1', 'G1[mm]', 'VIEW')        
+        AttrCreate.CreateDimensionAttributes(comp_def, 'r', elbow_r_str, 'STRING', 'R', 'R[mm]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'angle', elbow_angle_str, 'STRING', 'Angle', 'Angle[°]', 'VIEW')
+        AttrCreate.CreateDimensionAttributes(comp_def, 'uarea', elbow_area_str, 'STRING', 'Area', 'Area[m2]', 'VIEW')
+
+        AttrCreate.CreateFormulaAttributes(comp_def, 'uairspeed', 'STRING', 'uAirSpeed', 'Air Speed[m/s]', 'VIEW', 'uairflow/3600/(smallest(a,a1)*b/1000000)')
+
+        dcs = $dc_observers.get_latest_class
+        dcs.redraw_with_undo(component_instance)
       end
 
     rescue => e
